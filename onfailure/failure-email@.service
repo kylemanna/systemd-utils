@@ -3,4 +3,4 @@ Description=OnFailure for %i
 
 [Service]
 Type=oneshot
-ExecStart=/home/user/.config/systemd/onfailure.sh %i
+ExecStart=/usr/bin/env %h/.config/systemd/onfailure.sh %i

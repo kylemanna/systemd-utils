@@ -13,3 +13,13 @@ On Failure
         [Unit]
         ...
         OnFailure=failure-email@%i.service
+
+
+Failure Monitor
+---------------
+
+* Systemd service that runs and parses the output of journalctl.  When a task fails, an email is sent to the user at the configured email address.
+* The `failure-monitor` service will email the user when a service fails unexpectedly and include the `systemd status <svc>` output.
+* Example configuration:
+
+        $ systemctl --user start failure-monitor@test@gmail.com.service

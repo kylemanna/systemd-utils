@@ -68,11 +68,23 @@ for line in getjournal():
         #instance_name = m.groups()[3]
         #systemd_type = m.groups()[4]
 
+        systemctl_args = ['systemctl', 'status', full_name]
+
+        # If the command was run in this systemd user session, call status
+        # in this manner as well
+        if '--user' in j[0]['_CMDLINE'] and str(os.getuid()) == j[0]['_UID']:
+            systemctl_args.append('--user')
+
         try:
-            body = subprocess.check_output(['systemctl', 'status', full_name])
-        except Exception as e:
-            body = "Exception: %s" % e
-            sys.stderr.write(body + '\n')
+            body = subprocess.check_output(systemctl_args)
+        except subprocess.CalledProcessError as e:
+            # No clue why systemctl status returns 3 when the status msg
+            # returns fine, tip toe around this.
+            if e.returncode != 3:
+                body = "CalledProcessError: %s" % e
+                sys.stderr.write(body + '\n')
+            else:
+                body = e.output
 
         msg = MIMEText(body, _charset='utf-8')
         msg['From'] = email

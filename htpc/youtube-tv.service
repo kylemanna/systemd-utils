@@ -1,0 +1,9 @@
+[Unit]
+Description=Run YouTube TV
+
+[Service]
+ExecStart=/usr/bin/chromium --start-fullscreen https://youtube.com/tv
+Environment=DISPLAY=:0
+
+[Install]
+WantedBy=wm.target

@@ -1,0 +1,9 @@
+[Unit]
+Description=Run XBMC / Kodi
+
+[Service]
+ExecStart=/usr/bin/xbmc
+Environment=DISPLAY=:0
+
+[Install]
+WantedBy=wm.target

@@ -1,0 +1,5 @@
+# This target is to be started by the window manager, i.e. cinnamon
+# Use Startup Applications under settings to invoke this by running
+#    systemctl --user start wm.target
+[Unit]
+Description=Window manager target

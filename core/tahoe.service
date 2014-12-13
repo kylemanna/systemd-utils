@@ -1,0 +1,11 @@
+[Unit]
+Description=Run Tahoe
+
+[Service]
+ExecStart=/usr/bin/tahoe run
+Restart=always
+RestartSec=3
+WorkingDirectory=%h/.tahoe
+
+[Install]
+WantedBy=default.target

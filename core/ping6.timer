@@ -1,0 +1,8 @@
+[Unit]
+Description=Verify IPv6
+
+[Timer]
+OnCalendar=*:0/15
+
+[Install]
+WantedBy=default.target

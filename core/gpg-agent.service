@@ -1,0 +1,13 @@
+[Unit]
+Description=GPG private key agent
+IgnoreOnIsolate=true
+
+[Service]
+Type=forking
+# Start GPG manually so that precise arguments can be passed.  Would be nice if
+# gpgconf added support for allow-preset-password
+ExecStart=/usr/bin/gpg-agent --daemon --allow-preset-passphrase --max-cache-ttl 8640000
+Restart=on-abort
+
+[Install]
+WantedBy=default.target

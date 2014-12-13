@@ -1,0 +1,7 @@
+[Unit]
+Description=Test Failure
+#OnFailure=failure-email@%i.service
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c 'echo failing @ $(date); /usr/bin/false'

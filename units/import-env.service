@@ -1,0 +1,15 @@
+# Simple way to import user specific environmental variables
+#
+# Example env.conf file:
+#
+# EMAIL=user@gmail.com
+#
+[Unit]
+Description=Import systemd user env
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c 'xargs systemctl --user set-environment < $HOME/.config/systemd/env.conf'
+
+[Install]
+WantedBy=default.target

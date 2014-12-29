@@ -21,12 +21,14 @@
 # ExecStart=/path/to/onfailure.sh %i
 #
 #
-# Current magic to forward to real email is to setup email /etc/postfix/alias
-# for $USER@$HOSTNAME and that way no copies are needed.
+# Set EMAIL environemental variable to override destination, see
+# import-env.service for example of how to easily do this.
+#
+# Destiantion email priority: $2 -> $EMAIL -> $USER
 
-svc=${1-unknown}
-#email=${2-example@gmail.com}
-email=${2-$USER}
+svc=${1:-unknown}
+#email=${2:-example@gmail.com}
+email=${2:-${EMAIL:-$USER}}
 
 cat <<EOF | sendmail -i "$email"
 Subject: [$HOSTNAME] OnFailure Email for $svc

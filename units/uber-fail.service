@@ -1,6 +1,6 @@
 [Unit]
 Description=Test Failure
-#OnFailure=failure-email@%i.service
+OnFailure=failure-email@%i.service
 
 [Service]
 Type=oneshot

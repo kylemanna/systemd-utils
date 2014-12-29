@@ -20,6 +20,9 @@
 # Type=oneshot
 # ExecStart=/path/to/onfailure.sh %i
 #
+#
+# Current magic to forward to real email is to setup email /etc/postfix/alias
+# for $USER@$HOSTNAME and that way no copies are needed.
 
 svc=${1-unknown}
 #email=${2-example@gmail.com}

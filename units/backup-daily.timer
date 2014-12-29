@@ -1,0 +1,10 @@
+[Unit]
+Description=Daily Backups
+
+[Timer]
+OnCalendar=*-*-* 3:21:00
+Persistent=true
+Unit=backup-daily.target
+
+[Install]
+WantedBy=default.target

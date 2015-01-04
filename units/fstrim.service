@@ -1,0 +1,8 @@
+# Called by /usr/lib/systemd/system/fstrim.timer from util-linux
+# Add `-v` flag so that results can be reviewed in jouranctl
+[Unit]
+Description=Discard unused blocks
+
+[Service]
+Type=oneshot
+ExecStart=/sbin/fstrim -av

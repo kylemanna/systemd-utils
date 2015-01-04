@@ -1,0 +1,10 @@
+[Unit]
+Description=Check volume for errors
+Documentation=man:btrfs-scrub
+After=fstrim.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/sh -c 'for i in $(grep btrfs /proc/mounts | cut -f2 -d" "); do echo scrubbing $i; btrfs scrub start -Bd $i; done'
+IOSchedulingClass=idle
+CPUSchedulingPolicy=idle

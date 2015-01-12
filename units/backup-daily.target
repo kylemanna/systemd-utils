@@ -1,3 +1,4 @@
 [Unit]
 Description=Daily Backups
 OnFailure=failure-email@%i.service
+StopWhenUnneeded=yes

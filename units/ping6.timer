@@ -2,7 +2,8 @@
 Description=Verify IPv6
 
 [Timer]
-OnCalendar=*:0/15
+#OnCalendar=*:0/15
+OnCalendar=hourly
 
 [Install]
 WantedBy=default.target

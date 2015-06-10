@@ -1,0 +1,10 @@
+[Unit]
+Description=Run bitcoind and log to journalctl
+IgnoreOnIsolate=true
+
+[Service]
+ExecStart=/usr/bin/bitcoind -printtoconsole
+Restart=on-abort
+
+[Install]
+WantedBy=default.target

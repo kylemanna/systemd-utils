@@ -1,0 +1,14 @@
+[Unit]
+Description=Remove Default IPv6 Route
+After=sys-subsystem-net-devices-%i.device network.target
+
+[Service]
+ExecStart=/sbin/ip -6 route del default dev %i
+
+# Since we can't trigger after the specific device has finished
+# init, restart until success.
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

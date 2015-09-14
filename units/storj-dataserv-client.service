@@ -3,7 +3,7 @@ Description=Storj dataserv-client
 IgnoreOnIsolate=true
 
 [Service]
-ExecStart=/usr/bin/dataserv-client --address %i poll
+ExecStart=/usr/bin/dataserv-client --url=http://switch.driveshare.org farm
 Restart=always
 
 [Install]

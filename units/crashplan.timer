@@ -1,0 +1,8 @@
+[Unit]
+Description=Delay Crashplan at Boot-up
+
+[Timer]
+OnBootSec=30min
+
+[Install]
+WantedBy=multi-user.target

@@ -1,5 +1,7 @@
 [Unit]
 Description=Run Tahoe
+Wants=network-online.target
+After=network-online.target
 
 [Service]
 ExecStart=/usr/bin/tahoe run

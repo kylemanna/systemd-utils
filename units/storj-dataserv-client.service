@@ -4,7 +4,7 @@ IgnoreOnIsolate=true
 
 [Service]
 Environment="MAX_SIZE=100GB"
-ExecStart=/usr/bin/dataserv-client --url=http://switch.driveshare.org --max_size=${MAX_SIZE} farm
+ExecStart=/usr/bin/dataserv-client --max_size=${MAX_SIZE} farm
 Restart=always
 
 [Install]

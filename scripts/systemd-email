@@ -1,0 +1,17 @@
+#!/bin/bash
+
+set -e
+
+args="--since=today"
+[ -n "$3" ] && args="--after-cursor=$3"
+
+
+/usr/bin/sendmail -t <<ERRMAIL
+To: $1
+From: systemd <root@$HOSTNAME>
+Subject: $2
+Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=UTF-8
+
+$(journalctl -b0 $args -u "$2")
+ERRMAIL

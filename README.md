@@ -31,3 +31,16 @@ Symlink or hardlink unit files into `$HOME/.config/systemd/user`.  Systemd appea
 * Example configuration:
 
         $ systemctl --user start failure-monitor@test@gmail.com.service
+
+### Email Journal Log
+
+Upon completion of a script (i.e. a daily backup script), send an email of the log output.  The following code should be used to save a cursor before the execution of the service and send all the data followign that cursor.
+
+    ExecStartPre=/bin/sh -c 'journalctl -o cat -n 0 -u %n --show-cursor | cut -f3 -d" " > /run/%n.cursor'
+
+    ExecStart=...
+
+    ExecStopPost=/bin/sh -c '/etc/systemd/scripts/systemd-email you@example.com %n $(cat /run/%n.cursor)'
+    ExecStopPost=/bin/rm -f /run/%n.cursor
+
+It would be nice if systemd provided a reference to a cursor prior to the most recent invocation of the service (like the --boot option refers to this boot).  Until then hack around it.

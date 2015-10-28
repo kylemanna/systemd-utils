@@ -1,0 +1,9 @@
+[Unit]
+Description=Amazon Cloud Drive FUSE Mount
+
+[Service]
+ExecStart=/usr/bin/acd_cli -v mount --foreground %h/Cloud
+Restart=on-abort
+
+[Install]
+WantedBy=default.target

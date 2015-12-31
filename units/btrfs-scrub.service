@@ -5,6 +5,6 @@ After=fstrim.service
 
 [Service]
 Type=oneshot
-ExecStart=/usr/bin/sh -c 'for i in $(grep btrfs /proc/mounts | cut -f2 -d" "); do echo scrubbing $i; btrfs scrub start -Bd $i; done'
+ExecStart=/usr/bin/sh -c 'for i in $(grep btrfs /proc/mounts | cut -f1 -d" " | uniq); do echo scrubbing $i; btrfs scrub start -Bd $i; done'
 IOSchedulingClass=idle
 CPUSchedulingPolicy=idle

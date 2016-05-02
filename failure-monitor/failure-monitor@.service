@@ -1,3 +1,8 @@
+# Author: Kyle Manna <kyle[at]kylemanna[dot]com>
+#
+# Example usage:
+#   systemctl --user enable failure-monitor@youremail@domain.com.service
+#   systemctl --user start failure-monitor@youremail@domain.com.service
 [Unit]
 Description=Failure Monitor for %i
 

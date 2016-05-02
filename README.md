@@ -7,7 +7,7 @@ Random systemd utilities and unit files.
 Recommended location:
 
     cd $HOME/.config/systemd
-    git clone https://github.com/kylemanna/systemd-utils.git
+    git clone https://github.com/kylemanna/systemd-utils.git utils
 
 Symlink or hardlink unit files into `$HOME/.config/systemd/user`.  Systemd appears to have some issues with symlinked unit files at the time of writing.
 

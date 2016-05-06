@@ -1,0 +1,9 @@
+# Copy this file to /etc/udev/rules.d/
+
+ACTION!="add|change", GOTO="cmsis_dap_rules_end"
+SUBSYSTEM!="usb|tty|hidraw", GOTO="cmsis_dap_rules_end"
+
+# CMSIS-DAP compatible adapters
+ATTRS{product}=="*CMSIS-DAP*", MODE="664", GROUP="uucp", TAG+="systemd", ENV{SYSTEMD_ALIAS}="/sys/devices/swd/cmsis/dap/%E{ID_SERIAL_SHORT}"
+
+LABEL="cmsis_dap_rules_end"

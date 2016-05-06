@@ -1,0 +1,21 @@
+# Author: Kyle Manna <kyle[at]kylemanna[d0t]com> 
+#
+# This service file depends on a systemd device alias that will trigger this
+# service to start (after enabled) and start openocd as appropriate.  The
+# service will shutdown when the device is removed.
+#
+# To use, enable:
+# 1. Copy 98-cmsis-dap.rules to /etc/udev/rules.d
+# 2. systemctl --user enable openocd-cmsis-dap.service
+
+[Unit]
+Description=OpenOCD Daemon
+After=sys-devices-swd-cmsis-dap.device
+BindsTo=sys-devices-swd-cmsis-dap.device
+
+[Service]
+# Tested with FRDM-K64F
+ExecStart=/bin/sh -c 'sleep 1; exec openocd -f interface/cmsis-dap.cfg -f target/kx.cfg -c "kx.cpu configure -event gdb-attach { reset init }"'
+
+[Install]
+WantedBy=sys-devices-swd-cmsis-dap.device

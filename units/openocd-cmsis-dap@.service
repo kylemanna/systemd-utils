@@ -1,0 +1,13 @@
+# Use this unit file if you have multiple debuggers attached
+
+[Unit]
+Description=OpenOCD Daemon for Single Serial #
+After=sys-devices-swd-cmsis-dap-%i.device
+BindsTo=sys-devices-swd-cmsis-dap-%i.device
+
+[Service]
+# Using FRDM-K64F
+ExecStart=/bin/sh -c 'sleep 1; exec openocd -f interface/cmsis-dap.cfg -f target/kx.cfg -c "kx.cpu configure -event gdb-attach { reset init }" -c "cmsis_dap_serial %i"'
+
+[Install]
+WantedBy=sys-devices-swd-cmsis-dap-%i.device

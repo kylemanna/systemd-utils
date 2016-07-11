@@ -1,0 +1,20 @@
+# Setup a reverse ssh tunnel and restart it if it fails.
+#
+# This helps to create reverse NAT tunnels.
+#
+# More details @ http://blog.kylemanna.com/linux/2014/02/20/ssh-reverse-tunnel-on-linux-with-systemd/
+[Unit]
+Description=Reverse SSH Service
+After=network.target
+
+[Service]
+User=localuser
+ExecStart=/usr/bin/ssh -NTC -o ServerAliveInterval=60 -o ExitOnForwardFailure=yes -o StrictHostKeyChecking=no -i /home/localuser/.ssh/servername-home-key -R 12345:localhost:22 r@reverse.remotehost.tld
+
+# Restart every >2 seconds to avoid StartLimitInterval failure
+RestartSec=3
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+

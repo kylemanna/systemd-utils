@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 User=daemon
-ExecStart=/usr/bin/sh -c 'journalctl -f | ncat --ssl  logs999.papertrailapp.com 12345'
+ExecStart=/bin/sh -c 'journalctl -f | ncat --ssl  logs999.papertrailapp.com 12345'
 Restart=always
 RestartSec=3
 

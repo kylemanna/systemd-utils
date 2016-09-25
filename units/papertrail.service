@@ -1,0 +1,12 @@
+[Unit]
+Description=Log to PaperTrail
+After=network.target
+
+[Service]
+User=daemon
+ExecStart=/usr/bin/sh -c 'journalctl -f | ncat --ssl  logs999.papertrailapp.com 12345'
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

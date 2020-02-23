@@ -10,12 +10,13 @@ import json
 import os
 import pwd
 import re
+import select
 import smtplib
 import socket
-import stat
 import subprocess
 import sys
 from email.mime.text import MIMEText
+import systemd.journal
 
 import logging
 
@@ -23,21 +24,78 @@ logging.basicConfig(level=logging.INFO)
 log_name = os.path.basename(__file__) if __name__ == '__main__' else __name__
 logger = logging.getLogger(log_name)
 
-def getjournal():
-    mode = os.fstat(0).st_mode
+#
+# Class to monitor a systemd journal for exiting services and email them
+#
+class FailureMonitor(object):
+    def __init__(self, email):
+        self.email = email
 
-    if stat.S_ISFIFO(mode):
-        logger.info('Reading from stdin')
-        return sys.stdin
+    def run(self):
+        reader = systemd.journal.Reader()
+        reader.this_boot()
+        reader.seek_tail()
+        reader.get_previous()
+        reader.log_level(systemd.journal.LOG_WARNING)
 
-    else:
-        args = ['journalctl', '-f', '-o', 'json']
-        #args = ['journalctl', '--boot', '-1', '-o', 'json']
-        logger.info(f'Forking {args}')
+        p = select.poll()
+        p.register(reader.fileno(), reader.get_events())
 
-        p = subprocess.Popen(args, stdout = subprocess.PIPE)
+        while True:
+            p.poll()
 
-        return iter(p.stdout.readline,'')
+            if reader.process() == systemd.journal.APPEND:
+                self.handle_journal_entries(reader)
+
+        return True
+
+    def handle_journal_entries(self, reader):
+        for entry in reader:
+            self.handle_journal_entry(entry)
+
+    @staticmethod
+    def failure_detected_msg(msg: str):
+        # Currently unused, but common systemd failure strings
+        search = ['entered failed state', 'Failed with result']
+        return any([s in msg for s in search])
+
+    @staticmethod
+    def failure_detected(entry):
+        # This seems to be the simplest check
+        return (entry.get('CODE_FUNC', '') == 'unit_log_failure')
+
+    def handle_journal_entry(self, entry):
+
+        if not self.failure_detected(entry):
+            return
+
+        unit = entry.get('UNIT')
+        systemctl_args = ['systemctl', 'status', unit]
+
+        # If the command was run in this systemd user session, call status
+        # in this manner as well
+        if '--user' in entry['_CMDLINE'] and str(os.getuid()) == entry['_UID']:
+            systemctl_args.append('--user')
+
+        try:
+            body = subprocess.check_output(systemctl_args)
+        except subprocess.CalledProcessError as e:
+            # No clue why systemctl status returns 3 when the status msg
+            # returns fine, tip toe around this.
+            if e.returncode != 3:
+                logger.error(f'CalledProcessError: {e}')
+            else:
+                body = e.output
+
+        msg = MIMEText(body, _charset='utf-8')
+        msg['From'] = args.email
+        msg['To'] = args.email
+        msg['Subject'] = "[%s] systemd: Unit '%s' entered failed state" % (socket.gethostname(), unit)
+
+        server = smtplib.SMTP('localhost')
+        #server.set_debuglevel(1)
+        server.sendmail(args.email, args.email, msg.as_string())
+        server.quit()
 
 if __name__ == '__main__':
 
@@ -52,54 +110,7 @@ if __name__ == '__main__':
 
     logger.info(f'Email = {args.email}')
 
-    for line in getjournal():
+    monitor = FailureMonitor(args.email)
+    success = monitor.run()
 
-        if not line: break
-
-        # Attempt to work with python2 and python3
-        if isinstance(line, bytes): line = line.decode('utf-8')
-
-        j = json.loads('[' + line + ']');
-
-        if 'MESSAGE' in j[0] and 'Failed with result' in j[0]['MESSAGE']:
-            #print j[0]['MESSAGE']
-
-            # "Unit lvm2-pvscan@8:1.service entered failed state."
-            m = re.search("^Unit (([\w:-]+)(\@([\w:-]+))?\.(\w+)) entered failed state\.$", j[0]['MESSAGE'])
-
-            if not m:
-                continue
-
-            print("Event: %s" % str(m.groups()))
-
-            full_name = m.groups()[0]
-            #prefix_name = m.groups()[1]
-            #instance_name = m.groups()[3]
-            #systemd_type = m.groups()[4]
-
-            systemctl_args = ['systemctl', 'status', full_name]
-
-            # If the command was run in this systemd user session, call status
-            # in this manner as well
-            if '--user' in j[0]['_CMDLINE'] and str(os.getuid()) == j[0]['_UID']:
-                systemctl_args.append('--user')
-
-            try:
-                body = subprocess.check_output(systemctl_args)
-            except subprocess.CalledProcessError as e:
-                # No clue why systemctl status returns 3 when the status msg
-                # returns fine, tip toe around this.
-                if e.returncode != 3:
-                    logger.error(f'CalledProcessError: {e}')
-                else:
-                    body = e.output
-
-            msg = MIMEText(body, _charset='utf-8')
-            msg['From'] = args.email
-            msg['To'] = args.email
-            msg['Subject'] = "[%s] systemd: Unit '%s' entered failed state" % (socket.gethostname(), full_name)
-
-            server = smtplib.SMTP('localhost')
-            #server.set_debuglevel(1)
-            server.sendmail(args.email, args.email, msg.as_string())
-            server.quit()
+    sys.exit(0 if success else 1)

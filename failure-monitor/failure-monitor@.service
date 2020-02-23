@@ -7,7 +7,7 @@
 Description=Failure Monitor for %i
 
 [Service]
-ExecStart=/usr/bin/env %h/.config/systemd/utils/failure-monitor/failure-monitor.py %i
+ExecStart=%h/.config/systemd/utils/failure-monitor/failure-monitor.py %i
 Restart=always
 RestartSec=3
 

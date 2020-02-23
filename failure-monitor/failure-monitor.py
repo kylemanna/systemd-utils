@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Author: Kyle Manna <kyle@kylemanna.com>
+# Author: Kyle Manna <kyle[at]kylemanna[dot]com>
 #
 # Monitor systemd-journal for events that fail and email someone.
 #
@@ -33,65 +33,67 @@ def getjournal():
 
         return iter(p.stdout.readline,'')
 
+if __name__ == '__main__':
 
-if len(sys.argv) > 1 and sys.argv[1]:
-    email = sys.argv[1]
-elif os.environ['EMAIL']:
-    email = os.environ['EMAIL']
-else:
-    email = pwd.getpwuid(os.getuid())[0]
 
-sys.stderr.write("Email = %s\n" % email)
+    if len(sys.argv) > 1 and sys.argv[1]:
+        email = sys.argv[1]
+    elif os.environ['EMAIL']:
+        email = os.environ['EMAIL']
+    else:
+        email = pwd.getpwuid(os.getuid())[0]
 
-for line in getjournal():
+    sys.stderr.write("Email = %s\n" % email)
 
-    if not line: break
+    for line in getjournal():
 
-    # Attempt to work with python2 and python3
-    if isinstance(line, bytes): line = line.decode('utf-8')
+        if not line: break
 
-    j = json.loads('[' + line + ']');
+        # Attempt to work with python2 and python3
+        if isinstance(line, bytes): line = line.decode('utf-8')
 
-    if 'MESSAGE' in j[0] and 'entered failed state' in j[0]['MESSAGE']:
-        #print j[0]['MESSAGE']
+        j = json.loads('[' + line + ']');
 
-        # "Unit lvm2-pvscan@8:1.service entered failed state."
-        m = re.search("^Unit (([\w:-]+)(\@([\w:-]+))?\.(\w+)) entered failed state\.$", j[0]['MESSAGE'])
+        if 'MESSAGE' in j[0] and 'Failed with result' in j[0]['MESSAGE']:
+            #print j[0]['MESSAGE']
 
-        if not m:
-            continue
+            # "Unit lvm2-pvscan@8:1.service entered failed state."
+            m = re.search("^Unit (([\w:-]+)(\@([\w:-]+))?\.(\w+)) entered failed state\.$", j[0]['MESSAGE'])
 
-        print("Event: %s" % str(m.groups()))
+            if not m:
+                continue
 
-        full_name = m.groups()[0]
-        #prefix_name = m.groups()[1]
-        #instance_name = m.groups()[3]
-        #systemd_type = m.groups()[4]
+            print("Event: %s" % str(m.groups()))
 
-        systemctl_args = ['systemctl', 'status', full_name]
+            full_name = m.groups()[0]
+            #prefix_name = m.groups()[1]
+            #instance_name = m.groups()[3]
+            #systemd_type = m.groups()[4]
 
-        # If the command was run in this systemd user session, call status
-        # in this manner as well
-        if '--user' in j[0]['_CMDLINE'] and str(os.getuid()) == j[0]['_UID']:
-            systemctl_args.append('--user')
+            systemctl_args = ['systemctl', 'status', full_name]
 
-        try:
-            body = subprocess.check_output(systemctl_args)
-        except subprocess.CalledProcessError as e:
-            # No clue why systemctl status returns 3 when the status msg
-            # returns fine, tip toe around this.
-            if e.returncode != 3:
-                body = "CalledProcessError: %s" % e
-                sys.stderr.write(body + '\n')
-            else:
-                body = e.output
+            # If the command was run in this systemd user session, call status
+            # in this manner as well
+            if '--user' in j[0]['_CMDLINE'] and str(os.getuid()) == j[0]['_UID']:
+                systemctl_args.append('--user')
 
-        msg = MIMEText(body, _charset='utf-8')
-        msg['From'] = email
-        msg['To'] = email
-        msg['Subject'] = "[%s] systemd: Unit '%s' entered failed state" % (socket.gethostname(), full_name)
+            try:
+                body = subprocess.check_output(systemctl_args)
+            except subprocess.CalledProcessError as e:
+                # No clue why systemctl status returns 3 when the status msg
+                # returns fine, tip toe around this.
+                if e.returncode != 3:
+                    body = "CalledProcessError: %s" % e
+                    sys.stderr.write(body + '\n')
+                else:
+                    body = e.output
 
-        server = smtplib.SMTP('localhost')
-        #server.set_debuglevel(1)
-        server.sendmail(email, email, msg.as_string())
-        server.quit()
+            msg = MIMEText(body, _charset='utf-8')
+            msg['From'] = email
+            msg['To'] = email
+            msg['Subject'] = "[%s] systemd: Unit '%s' entered failed state" % (socket.gethostname(), full_name)
+
+            server = smtplib.SMTP('localhost')
+            #server.set_debuglevel(1)
+            server.sendmail(email, email, msg.as_string())
+            server.quit()

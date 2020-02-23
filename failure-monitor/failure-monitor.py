@@ -7,18 +7,16 @@
 
 import argparse
 import json
+import logging
 import os
 import pwd
-import re
 import select
 import smtplib
-import socket
-import subprocess
 import sys
-from email.mime.text import MIMEText
 import systemd.journal
+import email
 
-import logging
+from email.mime.text import MIMEText
 
 logging.basicConfig(level=logging.INFO)
 log_name = os.path.basename(__file__) if __name__ == '__main__' else __name__
@@ -70,32 +68,62 @@ class FailureMonitor(object):
             return
 
         unit = entry.get('UNIT')
-        systemctl_args = ['systemctl', 'status', unit]
+        hostname = entry.get('_HOSTNAME')
+        invoke_id = entry.get('INVOCATION_ID')
 
-        # If the command was run in this systemd user session, call status
-        # in this manner as well
-        if '--user' in entry['_CMDLINE'] and str(os.getuid()) == entry['_UID']:
-            systemctl_args.append('--user')
+        logger.warning(f'Unit "{unit}" failed with invocation id "{invoke_id}"')
 
-        try:
-            body = subprocess.check_output(systemctl_args)
-        except subprocess.CalledProcessError as e:
-            # No clue why systemctl status returns 3 when the status msg
-            # returns fine, tip toe around this.
-            if e.returncode != 3:
-                logger.error(f'CalledProcessError: {e}')
-            else:
-                body = e.output
+        filter_list = [
+                'CODE_FUNC',
+                'INVOCATION_ID'
+                'MESSAGE',
+                'PRIORITY',
+                'UNIT',
+                'UNIT_RESULT',
+                '_BOOT_ID',
+                '_HOSTNAME',
+                '__REALTIME_TIMESTAMP'
+                ]
+        entry2 = { k: str(v) for k, v in entry.items() if k in filter_list}
 
-        msg = MIMEText(body, _charset='utf-8')
+        body  = ['']
+        body += ['Failure Info:']
+        body += ['    ' + x for x in json.dumps(entry2, sort_keys=True, indent=4).split('\n')]
+        body += ['']
+        body += ['Logs:']
+        body += ['    ' + x for x in self.fetch_logs_for_invocation_id(invoke_id)]
+
+        body = '\n'.join(body)
+
+        msg = MIMEText(body)
         msg['From'] = args.email
         msg['To'] = args.email
-        msg['Subject'] = "[%s] systemd: Unit '%s' entered failed state" % (socket.gethostname(), unit)
+        msg['Subject'] = f"[{hostname}] systemd: Unit '{unit}' failed"
 
         server = smtplib.SMTP('localhost')
         #server.set_debuglevel(1)
         server.sendmail(args.email, args.email, msg.as_string())
         server.quit()
+
+    @staticmethod
+    def format_logs(entry):
+        msg = entry.get('MESSAGE')
+        time = entry.get('__REALTIME_TIMESTAMP')
+        unit = entry.get('_SYSTEMD_UNIT')
+        pid = entry.get('_PID')
+        return f'{time:%Y-%m-%d %H:%M:%m}  {unit}[{pid}]  {msg}'
+
+    def fetch_logs_for_invocation_id(self, invoke_id):
+        reader = systemd.journal.Reader()
+        reader.this_boot()
+        reader.add_match(_SYSTEMD_INVOCATION_ID=invoke_id)
+
+        logs = [self.format_logs(entry) for entry in reader]
+
+        reader.close()
+
+        return logs
+
 
 if __name__ == '__main__':
 

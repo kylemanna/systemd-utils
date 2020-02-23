@@ -5,15 +5,16 @@
 # Monitor systemd-journal for events that fail and email someone.
 #
 
-import os
-import re
-import pwd
-import sys
+import argparse
 import json
-import stat
+import os
+import pwd
+import re
 import smtplib
 import socket
+import stat
 import subprocess
+import sys
 from email.mime.text import MIMEText
 
 import logging
@@ -40,15 +41,16 @@ def getjournal():
 
 if __name__ == '__main__':
 
+    email = os.environ.get('EMAIL', pwd.getpwuid(os.getuid()).pw_name)
 
-    if len(sys.argv) > 1 and sys.argv[1]:
-        email = sys.argv[1]
-    elif os.environ['EMAIL']:
-        email = os.environ['EMAIL']
-    else:
-        email = pwd.getpwuid(os.getuid())[0]
+    parser = argparse.ArgumentParser()
+    parser.add_argument('email',
+                        nargs='?',
+                        help='destination email address for notifications',
+                        default=email)
+    args = parser.parse_args()
 
-    logger.warning(f'Email = {email}')
+    logger.info(f'Email = {args.email}')
 
     for line in getjournal():
 
@@ -93,11 +95,11 @@ if __name__ == '__main__':
                     body = e.output
 
             msg = MIMEText(body, _charset='utf-8')
-            msg['From'] = email
-            msg['To'] = email
+            msg['From'] = args.email
+            msg['To'] = args.email
             msg['Subject'] = "[%s] systemd: Unit '%s' entered failed state" % (socket.gethostname(), full_name)
 
             server = smtplib.SMTP('localhost')
             #server.set_debuglevel(1)
-            server.sendmail(email, email, msg.as_string())
+            server.sendmail(args.email, args.email, msg.as_string())
             server.quit()

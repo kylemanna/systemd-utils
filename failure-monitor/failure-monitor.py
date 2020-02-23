@@ -16,18 +16,23 @@ import socket
 import subprocess
 from email.mime.text import MIMEText
 
+import logging
+
+logging.basicConfig(level=logging.INFO)
+log_name = os.path.basename(__file__) if __name__ == '__main__' else __name__
+logger = logging.getLogger(log_name)
 
 def getjournal():
     mode = os.fstat(0).st_mode
 
     if stat.S_ISFIFO(mode):
-        sys.stderr.write("Reading from stdin\n")
+        logger.info('Reading from stdin')
         return sys.stdin
 
     else:
         args = ['journalctl', '-f', '-o', 'json']
         #args = ['journalctl', '--boot', '-1', '-o', 'json']
-        sys.stderr.write("Forking %s\n" % str(args))
+        logger.info(f'Forking {args}')
 
         p = subprocess.Popen(args, stdout = subprocess.PIPE)
 
@@ -43,7 +48,7 @@ if __name__ == '__main__':
     else:
         email = pwd.getpwuid(os.getuid())[0]
 
-    sys.stderr.write("Email = %s\n" % email)
+    logger.warning(f'Email = {email}')
 
     for line in getjournal():
 
@@ -83,8 +88,7 @@ if __name__ == '__main__':
                 # No clue why systemctl status returns 3 when the status msg
                 # returns fine, tip toe around this.
                 if e.returncode != 3:
-                    body = "CalledProcessError: %s" % e
-                    sys.stderr.write(body + '\n')
+                    logger.error(f'CalledProcessError: {e}')
                 else:
                     body = e.output
 

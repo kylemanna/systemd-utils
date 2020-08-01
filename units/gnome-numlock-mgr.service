@@ -1,0 +1,13 @@
+[Unit]
+Description=GNOME Numlock Manager
+After=gnome-session.target
+
+[Service]
+ExecStart=/usr/bin/python -u ${HOME}/.config/systemd/utils/scripts/gnome-numlock-mgr.py
+
+# Restart every >2 seconds to avoid StartLimitInterval failure
+#RestartSec=3
+#Restart=on-abort
+
+[Install]
+WantedBy=default.target

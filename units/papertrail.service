@@ -1,12 +1,16 @@
 [Unit]
-Description=Log to PaperTrail
-After=network.target
+Description=Papertrail
+After=systemd-journald.service network-online.target
+Requires=systemd-journald.service
 
 [Service]
-User=daemon
+DynamicUser=true
+Group=systemd-journal
+ProtectSystem=true
+ProtectHome=true
 ExecStart=/bin/sh -c 'journalctl -f | ncat --ssl  logs999.papertrailapp.com 12345'
-Restart=always
-RestartSec=3
+Restart=on-failure
+RestartSec=1m
 
 [Install]
 WantedBy=multi-user.target

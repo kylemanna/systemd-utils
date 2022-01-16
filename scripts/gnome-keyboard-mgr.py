@@ -73,12 +73,15 @@ if __name__ == '__main__':
     bus = dbus.SessionBus()
 
     mgr = GnomeLedMgr('/dev/input/by-id/usb-Logitech_Logitech_G710_Keyboard-event-if01')
+    # Initial state is no screensaver
+    mgr.signal_cb(False)
 
     bus.add_signal_receiver(mgr.signal_cb, 'ActiveChanged', 'org.gnome.ScreenSaver')
 
-    # TODO: THis doesn't fire when monitors turn on, but when the screensave is unlocked, kind of
+    # TODO: This doesn't fire when monitors turn on, but when the screensave is unlocked, kind of
     # useless.
     bus.add_signal_receiver(mgr.wake_signal_cb, 'WakeUpScreen', 'org.gnome.ScreenSaver')
+
 
     loop = GLib.MainLoop()
     loop.run()
